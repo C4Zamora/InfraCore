@@ -48,7 +48,7 @@
     "recharts": "^3.8.1",
     "redux": "5.0.1",
     "simplebar-react": "^3.3.2",
-    "sweetalert2": "^11.26.24"
+    "sweetalert2": "^11.26.25"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^6.0.1",

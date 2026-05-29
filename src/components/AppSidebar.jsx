@@ -1,25 +1,4 @@
-/**
- * AppSidebar Component
- *
- * Collapsible navigation sidebar with branding, menu items, and toggle controls.
- *
- * Features:
- * - Redux-controlled visibility state
- * - Unfoldable/narrow mode for more screen space
- * - Brand logo with full and narrow variants
- * - Close button for mobile devices
- * - Footer with toggle button
- * - Dark color scheme
- * - Fixed positioning
- *
- * @component
- * @example
- * return (
- *   <AppSidebar />
- * )
- */
-
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
 import {
@@ -33,29 +12,38 @@ import {
 import CIcon from '@coreui/icons-react'
 
 import { AppSidebarNav } from './AppSidebarNav'
-
 import { logo } from 'src/assets/brand/logo'
 import { sygnet } from 'src/assets/brand/sygnet'
 
-// sidebar nav config
-import navigation from '../_nav'
+import obtenerNavegacionPorRol from '../_nav'
 
-/**
- * AppSidebar functional component
- *
- * Manages sidebar state with Redux:
- * - sidebarShow: Controls sidebar visibility
- * - sidebarUnfoldable: Controls narrow/wide mode
- *
- * Renders navigation from _nav.js configuration file.
- * Memoized to prevent unnecessary re-renders.
- *
- * @returns {React.ReactElement} Sidebar with navigation
- */
 const AppSidebar = () => {
   const dispatch = useDispatch()
   const unfoldable = useSelector((state) => state.sidebarUnfoldable)
   const sidebarShow = useSelector((state) => state.sidebarShow)
+  
+  // Función interna para mapear y extraer el id_rol desde el objeto 'usuario' del LocalStorage
+  const obtenerIdRolDelStorage = () => {
+    try {
+      const datosUsuario = localStorage.getItem('usuario')
+      if (datosUsuario) {
+        const usuarioObj = JSON.parse(datosUsuario)
+        return parseInt(usuarioObj.id_rol, 10) || 3 // Si existe, retorna el id_rol (ej: 2)
+      }
+    } catch (error) {
+      console.error("Error al parsear el usuario en el Sidebar:", error)
+    }
+    return 3 // Retorna rol 3 (Auditor / Solo lectura) por seguridad si no hay nadie logueado
+  }
+
+  const [rolIdActual, setRolIdActual] = useState(obtenerIdRolDelStorage())
+
+  useEffect(() => {
+    // Al cambiar la visibilidad o cargar el componente, actualizamos el estado con el ID real
+    setRolIdActual(obtenerIdRolDelStorage())
+  }, [sidebarShow])
+
+  const menuFiltrado = obtenerNavegacionPorRol(rolIdActual)
 
   return (
     <CSidebar
@@ -79,7 +67,10 @@ const AppSidebar = () => {
           onClick={() => dispatch({ type: 'set', sidebarShow: false })}
         />
       </CSidebarHeader>
-      <AppSidebarNav items={navigation} />
+
+      {/* Reconstruye el componente de forma limpia según el ID extraído */}
+      <AppSidebarNav key={rolIdActual} items={menuFiltrado} />
+
       <CSidebarFooter className="border-top d-none d-lg-flex">
         <CSidebarToggler
           onClick={() => dispatch({ type: 'set', sidebarUnfoldable: !unfoldable })}
@@ -89,4 +80,4 @@ const AppSidebar = () => {
   )
 }
 
-export default React.memo(AppSidebar)
+export default AppSidebar
