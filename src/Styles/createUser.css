@@ -1,0 +1,123 @@
+/* createUser.css */
+
+.create-user-container {
+  padding: 24px;
+  background: #f5f6fa;
+  min-height: 100vh;
+}
+
+.create-user-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.create-user-title {
+  font-size: 34px;
+  font-weight: 700;
+  color: #25324B;
+  margin-bottom: 6px;
+}
+
+.create-user-subtitle {
+  color: #6b7280;
+  font-size: 15px;
+  margin: 0;
+}
+
+.create-user-card {
+  border: none !important;
+  border-radius: 16px !important;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+}
+
+.create-user-card-header {
+  background: white !important;
+  border-bottom: 1px solid #eef1f6 !important;
+  padding: 20px 24px !important;
+  font-size: 18px;
+  font-weight: 600;
+  color: #25324B;
+}
+
+.card-body {
+  padding: 28px !important;
+}
+
+.form-label {
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.form-control,
+.form-select {
+  height: 48px;
+  border-radius: 10px !important;
+  border: 1px solid #dbe2ea !important;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #5B5CE2 !important;
+  box-shadow: 0 0 0 0.2rem rgba(91, 92, 226, 0.15) !important;
+}
+
+.checkbox-container {
+  background: #f9fafc;
+  border: 1px solid #e6ebf2;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.create-user-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+  margin-top: 32px;
+}
+
+.cancel-button {
+  border-radius: 10px !important;
+  padding: 10px 20px !important;
+  font-weight: 500;
+}
+
+.save-button {
+  background: #5B5CE2 !important;
+  border: none !important;
+  border-radius: 10px !important;
+  padding: 10px 24px !important;
+  font-weight: 600 !important;
+}
+
+.save-button:hover {
+  background: #4c4dd1 !important;
+}
+
+.back-button {
+  border-radius: 10px !important;
+  padding: 10px 18px !important;
+}
+
+@media (max-width: 768px) {
+
+  .create-user-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .create-user-actions {
+    flex-direction: column;
+  }
+
+  .save-button,
+  .cancel-button {
+    width: 100%;
+  }
+}
