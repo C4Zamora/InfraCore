@@ -36,8 +36,8 @@ const obtenerServidores = (req, res) => {
 }
 
 const actualizarServidor = (req, res) => {
-  // CAMBIO 1: Extraer 'id_servidor' en lugar de 'id' para coincidir con la ruta de Express
-  const { id_servidor } = req.params
+  // Obtener el ID del servidor desde req.params (:id o :id_servidor) o req.body
+  const id_servidor = req.params.id || req.params.id_servidor || req.body.id_servidor
 
   const {
     nombre,
@@ -56,7 +56,7 @@ const actualizarServidor = (req, res) => {
     id_ubicacion,
   } = req.body
 
-  // CAMBIO 2: Mapeo de seguridad por si desde el Front llega el texto en lugar del ID numérico
+  // Mapeo de seguridad por si desde el Front llega el texto en lugar del ID numérico
   let estadoFinalId = id_estado;
   if (!estadoFinalId && estado) {
     const mapaEstados = {
@@ -90,20 +90,20 @@ const actualizarServidor = (req, res) => {
   db.query(
     sql,
     [
-      nombre,
-      ip,
-      hostname,
-      sistema_operativo,
-      mac,
-      serial,
-      fabricante,
-      modelo,
-      descripcion,
-      version_so,
-      estadoFinalId, // Usamos el ID numérico resuelto
+      nombre ?? null,
+      ip ?? null,
+      hostname ?? null,
+      sistema_operativo ?? null,
+      mac ?? null,
+      serial ?? null,
+      fabricante ?? null,
+      modelo ?? null,
+      descripcion ?? null,
+      version_so ?? null,
+      estadoFinalId || 1,
       id_tipo || 1,
       id_ubicacion || 1,
-      id_servidor, // Usamos la variable correcta del parámetro
+      id_servidor,
     ],
     (error, result) => {
       if (error) {
@@ -126,8 +126,8 @@ const actualizarServidor = (req, res) => {
 }
 
 const eliminarServidor = (req, res) => {
-  // CAMBIO 3: Cambiado 'id' por 'id_servidor'
-  const { id_servidor } = req.params
+  // Obtener el ID del servidor desde req.params (:id o :id_servidor) o req.body
+  const id_servidor = req.params.id || req.params.id_servidor || req.body.id_servidor
 
   const sql = `
     UPDATE servidores
