@@ -62,6 +62,11 @@ const Login = () => {
         JSON.stringify(response.data.usuario)
       )
 
+      localStorage.setItem(
+        "usuario_rol_id",
+        response.data.usuario.id_rol
+      )
+
       // =========================
       // REDIRECCIÓN
       // =========================

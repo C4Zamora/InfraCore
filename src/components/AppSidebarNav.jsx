@@ -13,9 +13,8 @@ export const AppSidebarNav = ({ items }) => {
   const handleLogout = (e) => {
     e.preventDefault()
 
-    // limpiar sesión
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
+    // limpiar sesión completa
+    localStorage.clear()
     sessionStorage.clear()
 
     // redirección limpia

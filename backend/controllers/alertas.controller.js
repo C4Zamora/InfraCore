@@ -1,4 +1,5 @@
 const db = require('../db');
+const { registrarCambio } = require('./historial.controller');
 
 
 // OBTENER ALERTAS
@@ -90,6 +91,8 @@ const marcarTodasLeidas = (req, res) => {
             });
 
         }
+
+        registrarCambio('tecnico', 'Alertas', 'Resolución', `Se marcaron ${result.affectedRows} alertas como leídas/resueltas`);
 
         res.json({
             message: 'Alertas actualizadas correctamente',

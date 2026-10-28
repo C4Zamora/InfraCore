@@ -7,12 +7,12 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import '../../Styles/logsViewer.css';
 
 // ─── Config ────────────────────────────────────────────────────────────────────
-const BASE_URL = '/api/v1'; // Ajusta a tu URL base
+const BASE_URL = 'http://localhost:3001/api';
 
 const LEVELS   = ['ALL', 'CRITICAL', 'ERROR', 'WARN', 'INFO', 'DEBUG'];
-const SERVICES = ['Todos', 'api-gateway', 'auth-service', 'db-replica', 'scheduler', 'mailer', 'storage'];
-const HOSTS    = ['Todos', 'SRV-WEB-01', 'SRV-WEB-02', 'SRV-WEB-03', 'SRV-DB-01', 'SRV-DB-02'];
-const PER_PAGE = [50, 100, 200, 500];
+const SERVICES = ['Todos', 'Auth', 'Servidores', 'Usuarios', 'Base de datos', 'Sistema', 'API Gateway'];
+const HOSTS    = ['Todos', 'SRV-PROD-APP01', 'SRV-PROD-DB01', 'SRV-WEB-NGINX01', 'SRV-STORAGE-NAS', 'SRV-DEV-TEST01'];
+const PER_PAGE = [25, 50, 100, 200];
 
 // ─── Estilos por nivel ──────────────────────────────────────────────────────────
 const LEVEL_STYLES = {
@@ -147,36 +147,11 @@ function useLogs(filters, pagination, search) {
     setLoading(true);
     setError(null);
     try {
-      // ── Integración real ───────────────────────────────────────────────────
-      // const qs = buildQueryParams(filters, pagination, search);
-      // const res = await fetch(`${BASE_URL}/logs?${qs}`, {
-      //   headers: { Authorization: `Bearer ${getToken()}` }
-      // });
-      // if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      // const json = await res.json();
-      // setData({ logs: json.data, total: json.total });
-      // ──────────────────────────────────────────────────────────────────────
-
-      // Simulación mock
-      await new Promise(r => setTimeout(r, 300));
-
-      let filtered = ALL_MOCK;
-      if (filters.level !== 'ALL')     filtered = filtered.filter(l => l.level === filters.level);
-      if (filters.service !== 'Todos') filtered = filtered.filter(l => l.service === filters.service);
-      if (filters.host !== 'Todos')    filtered = filtered.filter(l => l.host === filters.host);
-      if (search) {
-        const q = search.toLowerCase();
-        filtered = filtered.filter(l =>
-          l.message.toLowerCase().includes(q) ||
-          l.service.toLowerCase().includes(q) ||
-          l.traceId.toLowerCase().includes(q)
-        );
-      }
-
-      const total = filtered.length;
-      const start = (pagination.page - 1) * pagination.perPage;
-      const logs  = filtered.slice(start, start + pagination.perPage);
-      setData({ logs, total });
+      const qs = buildQueryParams(filters, pagination, search);
+      const res = await fetch(`${BASE_URL}/logs?${qs}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      setData({ logs: json.logs || json.data || [], total: json.total || 0 });
     } catch (e) {
       setError(e.message || 'Error al cargar los logs');
     } finally {

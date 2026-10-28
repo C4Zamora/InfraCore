@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import axios from 'axios'
+import Swal from 'sweetalert2'
 import '../../Styles/user.css'
 
 import {
@@ -8,6 +9,14 @@ import {
   CCardBody,
   CCardHeader,
   CCol,
+  CFormInput,
+  CFormLabel,
+  CFormTextarea,
+  CModal,
+  CModalBody,
+  CModalFooter,
+  CModalHeader,
+  CModalTitle,
   CRow,
   CTable,
   CTableBody,
@@ -106,62 +115,107 @@ const defaultRole = {
 const Roles = () => {
   const [roles, setRoles] = useState([])
   const [selectedRole, setSelectedRole] = useState(null)
-
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    const fetchRoles = async () => {
-      try {
-        setLoading(true)
-        setError('')
+  // Modal State
+  const [showModal, setShowModal] = useState(false)
+  const [newRoleName, setNewRoleName] = useState('')
+  const [newRoleDesc, setNewRoleDesc] = useState('')
+  const [savingRole, setSavingRole] = useState(false)
 
-        const response = await axios.get(
-          'http://localhost:3001/api/usuarios/roles/conteo'
-        )
+  const fetchRoles = async () => {
+    try {
+      setLoading(true)
+      setError('')
 
-        console.log('BACKEND RESPONSE:', response.data)
+      const response = await axios.get(
+        'http://localhost:3001/api/usuarios/roles/conteo'
+      )
 
-        const rawData = Array.isArray(response.data)
-          ? response.data
-          : []
+      const rawData = Array.isArray(response.data)
+        ? response.data
+        : []
 
-        const normalized = rawData.map((role) => {
-          const visual = roleVisualConfig[role.nombre] || {}
+      const normalized = rawData.map((role) => {
+        const visual = roleVisualConfig[role.nombre] || {}
 
-          return {
-            id: role.id_rol,
-            nombre: role.nombre,
-            descripcion: role.descripcion || visual.descripcion,
-            usuarios: Number(role.usuarios ?? 0),
-            color: visual.color || 'gray',
-            permisos: visual.permisos || defaultRole.permisos,
-          }
-        })
+        return {
+          id: role.id_rol,
+          nombre: role.nombre,
+          descripcion: role.descripcion || visual.descripcion || 'Sin descripción',
+          usuarios: Number(role.usuarios ?? 0),
+          color: visual.color || 'blue',
+          permisos: visual.permisos || {
+            dashboard: true,
+            inventario: true,
+            servidores: false,
+            usuarios: false,
+            monitoreo: true,
+            auditoria: false,
+            reportes: false,
+            configuracion: false,
+          },
+        }
+      })
 
-        setRoles(normalized)
-        setSelectedRole(normalized[0] || null)
-      } catch (err) {
-        console.error('ERROR BACKEND:', err)
-
-        setError(
-          err?.response?.data?.message ||
-            err.message ||
-            'Error cargando roles'
-        )
-
-        setRoles([])
-        setSelectedRole(null)
-      } finally {
-        setLoading(false)
-      }
+      setRoles(normalized)
+      setSelectedRole(normalized[0] || null)
+    } catch (err) {
+      console.error('ERROR BACKEND:', err)
+      setError(
+        err?.response?.data?.message ||
+          err.message ||
+          'Error cargando roles'
+      )
+      setRoles([])
+      setSelectedRole(null)
+    } finally {
+      setLoading(false)
     }
+  }
 
+  useEffect(() => {
     fetchRoles()
   }, [])
 
-  const handleCreateRole = () => {
-    console.log('Crear rol')
+  const handleCreateRoleSubmit = async () => {
+    if (!newRoleName.trim()) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Nombre requerido',
+        text: 'Por favor complete el nombre del rol.',
+      })
+      return
+    }
+
+    try {
+      setSavingRole(true)
+      await axios.post('http://localhost:3001/api/roles', {
+        nombre: newRoleName.trim(),
+        descripcion: newRoleDesc.trim(),
+      })
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Rol Creado',
+        text: `El rol "${newRoleName.trim()}" fue registrado correctamente en la base de datos.`,
+      })
+
+      setShowModal(false)
+      setNewRoleName('')
+      setNewRoleDesc('')
+      fetchRoles()
+    } catch (err) {
+      console.error(err)
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: err?.response?.data?.message || 'Error creando el rol',
+      })
+    } finally {
+      setSavingRole(false)
+    }
   }
 
   const getPermissionValue = (module) => {
@@ -202,7 +256,7 @@ const Roles = () => {
           </p>
         </div>
 
-        <CButton className="create-role-btn" onClick={handleCreateRole}>
+        <CButton className="create-role-btn" onClick={() => setShowModal(true)}>
           <CIcon icon={cilPlus} className="me-2" />
           Crear rol
         </CButton>
@@ -302,7 +356,41 @@ const Roles = () => {
         </CCol>
       </CRow>
 
-      <div className="roles-footer">
+      {/* MODAL CREAR ROL */}
+      <CModal visible={showModal} onClose={() => setShowModal(false)}>
+        <CModalHeader>
+          <CModalTitle>Crear Nuevo Rol de Sistema</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          <div className="mb-3">
+            <CFormLabel>Nombre del Rol *</CFormLabel>
+            <CFormInput
+              placeholder="Ej: Supervisor, Especialista Redes"
+              value={newRoleName}
+              onChange={(e) => setNewRoleName(e.target.value)}
+            />
+          </div>
+          <div className="mb-3">
+            <CFormLabel>Descripción</CFormLabel>
+            <CFormTextarea
+              rows={3}
+              placeholder="Breve explicación de las responsabilidades del rol"
+              value={newRoleDesc}
+              onChange={(e) => setNewRoleDesc(e.target.value)}
+            />
+          </div>
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" onClick={() => setShowModal(false)}>
+            Cancelar
+          </CButton>
+          <CButton color="primary" onClick={handleCreateRoleSubmit} disabled={savingRole}>
+            {savingRole ? 'Guardando...' : 'Guardar Rol'}
+          </CButton>
+        </CModalFooter>
+      </CModal>
+
+      <div className="roles-footer mt-4 text-muted text-sm">
         Los permisos se aplican en función del rol asignado a cada usuario.
       </div>
     </div>

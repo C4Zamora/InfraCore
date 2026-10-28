@@ -1,5 +1,5 @@
 const db = require('../db');
-
+const { registrarCambio } = require('./historial.controller');
 const bcrypt = require('bcrypt');
 
 
@@ -162,6 +162,8 @@ VALUES (?, ?, ?, ?, ?, ?, NOW(), ?)
 
                                 }
 
+                                registrarCambio('admin', 'Solicitudes', 'Aprobación', `Se aprobó la solicitud ID: ${id_solicitud} creando usuario ${correo}`);
+
                                 res.json({
                                     message:
                                         'Usuario creado correctamente'
@@ -204,6 +206,8 @@ const rechazarSolicitud = (req, res) => {
         if (err) {
             return res.status(500).json(err);
         }
+
+        registrarCambio('admin', 'Solicitudes', 'Rechazo', `Se rechazó la solicitud ID: ${id_solicitud}`);
 
         res.json({
             message: 'Solicitud rechazada'

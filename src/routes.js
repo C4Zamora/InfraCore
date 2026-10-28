@@ -28,6 +28,9 @@ const LogsViewer = React.lazy(() => import('./views/Auditoria/Logsviewer'))
 // CUENTA
 const UserProfile = React.lazy(() => import('./views/perfil/Userprofile'))
 
+// CONFIGURACIÓN
+const Configuracion = React.lazy(() => import('./views/configuracion/Configuracion'))
+
 /**
  * Configuración de Rutas de la Aplicación (RBAC Numérico)
  * 1 = Administrador (Control total)
@@ -108,6 +111,14 @@ export const routes = [
     name: 'Logs del Sistema', 
     element: LogsViewer, 
     rolesPermitidos: [1, 3] 
+  },
+
+  // Configuración del Sistema (Exclusivo Administrador)
+  { 
+    path: '/configuracion', 
+    name: 'Parámetros del Sistema', 
+    element: Configuracion, 
+    rolesPermitidos: [1] 
   },
 
   // Perfil del usuario conectado (Público/Cualquier usuario autenticado)

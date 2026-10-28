@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
+import axios from 'axios'
 import '../../Styles/monitoreo.css'
 
 import {
@@ -20,191 +21,160 @@ import {
 } from '@coreui/react'
 
 import CIcon from '@coreui/icons-react'
-
 import {
   cilCloudDownload,
   cilLoopCircular,
   cilSearch,
 } from '@coreui/icons'
 
-const servicesData = [
-  {
-    id: 1,
-    servidor: 'SRV-APP-01',
-    ip: '192.168.1.10',
-    tipo: 'Aplicación',
-    ubicacion: 'Datacenter Principal',
-    estado: 'Activo',
-    ultimoCambio: '10/05/2024 09:30',
-  },
+const TIPOS_MAP = {
+  1: 'Aplicaciones',
+  2: 'Base de datos',
+  3: 'Web',
+  4: 'Archivos'
+}
 
-  {
-    id: 2,
-    servidor: 'SRV-DB-02',
-    ip: '192.168.1.11',
-    tipo: 'Base de datos',
-    ubicacion: 'Datacenter Principal',
-    estado: 'En mantenimiento',
-    ultimoCambio: '10/05/2024 08:15',
-  },
-
-  {
-    id: 3,
-    servidor: 'SRV-WEB-03',
-    ip: '192.168.1.12',
-    tipo: 'Web',
-    ubicacion: 'Sucursal Norte',
-    estado: 'Caído',
-    ultimoCambio: '10/05/2024 09:45',
-  },
-
-  {
-    id: 4,
-    servidor: 'SRV-FILES-04',
-    ip: '192.168.1.13',
-    tipo: 'Almacenamiento',
-    ubicacion: 'Sucursal Sur',
-    estado: 'Activo',
-    ultimoCambio: '10/05/2024 09:00',
-  },
-
-  {
-    id: 5,
-    servidor: 'SRV-DEV-05',
-    ip: '192.168.1.14',
-    tipo: 'Desarrollo',
-    ubicacion: 'Sucursal Este',
-    estado: 'Activo',
-    ultimoCambio: '10/05/2024 08:50',
-  },
-]
-
-const stats = [
-  {
-    id: 1,
-    title: 'Activos',
-    value: 98,
-    percentage: '81.7%',
-    color: 'green',
-  },
-
-  {
-    id: 2,
-    title: 'En mantenimiento',
-    value: 12,
-    percentage: '10.0%',
-    color: 'orange',
-  },
-
-  {
-    id: 3,
-    title: 'Caídos',
-    value: 4,
-    percentage: '3.3%',
-    color: 'red',
-  },
-
-  {
-    id: 4,
-    title: 'Total',
-    value: 120,
-    percentage: '100%',
-    color: 'blue',
-  },
-]
+const UBICACIONES_MAP = {
+  1: 'Bogotá',
+  2: 'Medellín',
+  3: 'Cali',
+  4: 'Barranquilla',
+  5: 'Datacenter Principal'
+}
 
 const ServiceStatus = () => {
+  const [servicesData, setServicesData] = useState([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] =
-    useState('Todos')
+  const [statusFilter, setStatusFilter] = useState('Todos')
+  const [serviceType, setServiceType] = useState('Todos')
 
-  const [serviceType, setServiceType] =
-    useState('Todos')
+  const fetchServices = async () => {
+    try {
+      setLoading(true)
+      const res = await axios.get('http://localhost:3001/api/servidores')
+      const normalized = (res.data || []).map(s => ({
+        id: s.id_servidor,
+        servidor: s.nombre,
+        ip: s.ip,
+        tipo: TIPOS_MAP[s.id_tipo] || s.tipo || 'General',
+        ubicacion: UBICACIONES_MAP[s.id_ubicacion] || s.ubicacion || 'Principal',
+        estado: s.estado || (s.id_estado === 1 ? 'Activo' : s.id_estado === 2 ? 'En mantenimiento' : s.id_estado === 3 ? 'Caído' : 'Inactivo'),
+        ultimoCambio: s.fecha_registro ? new Date(s.fecha_registro).toLocaleString('es-CO') : 'Reciente'
+      }))
+      setServicesData(normalized)
+    } catch (err) {
+      console.error('Error al cargar servicios:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchServices()
+  }, [])
+
+  // Dynamic stats calculation
+  const stats = useMemo(() => {
+    const total = servicesData.length
+    const activos = servicesData.filter(s => s.estado === 'Activo').length
+    const mantenimiento = servicesData.filter(s => s.estado === 'En mantenimiento').length
+    const caidos = servicesData.filter(s => s.estado === 'Caído').length
+
+    return [
+      {
+        id: 1,
+        title: 'Activos',
+        value: activos,
+        percentage: total > 0 ? `${Math.round((activos / total) * 100)}%` : '0%',
+        color: 'green',
+      },
+      {
+        id: 2,
+        title: 'En mantenimiento',
+        value: mantenimiento,
+        percentage: total > 0 ? `${Math.round((mantenimiento / total) * 100)}%` : '0%',
+        color: 'orange',
+      },
+      {
+        id: 3,
+        title: 'Caídos',
+        value: caidos,
+        percentage: total > 0 ? `${Math.round((caidos / total) * 100)}%` : '0%',
+        color: 'red',
+      },
+      {
+        id: 4,
+        title: 'Total Servidores',
+        value: total,
+        percentage: '100%',
+        color: 'blue',
+      },
+    ]
+  }, [servicesData])
 
   const filteredServices = useMemo(() => {
     return servicesData.filter((service) => {
       const matchesSearch =
-        service.servidor
-          .toLowerCase()
-          .includes(search.toLowerCase()) ||
+        service.servidor.toLowerCase().includes(search.toLowerCase()) ||
         service.ip.includes(search)
 
       const matchesStatus =
-        statusFilter === 'Todos' ||
-        service.estado === statusFilter
+        statusFilter === 'Todos' || service.estado === statusFilter
 
       const matchesType =
-        serviceType === 'Todos' ||
-        service.tipo === serviceType
+        serviceType === 'Todos' || service.tipo === serviceType
 
-      return (
-        matchesSearch &&
-        matchesStatus &&
-        matchesType
-      )
+      return matchesSearch && matchesStatus && matchesType
     })
-  }, [search, statusFilter, serviceType])
+  }, [servicesData, search, statusFilter, serviceType])
 
   const getStatusClass = (status) => {
     switch (status) {
       case 'Activo':
         return 'status-active'
-
       case 'En mantenimiento':
         return 'status-maintenance'
-
       case 'Caído':
         return 'status-down'
-
       default:
-        return ''
+        return 'status-inactive'
     }
   }
 
   const handleRefresh = () => {
-    console.log('Actualizar servicios')
+    fetchServices()
   }
 
   return (
     <div className="services-container">
-      <div className="services-header">
+      <div className="services-header d-flex justify-content-between align-items-center mb-4">
         <div>
           <h3 className="services-title">
-            Estado de servicios
+            Estado de servicios en vivo
           </h3>
-
-          <p className="services-subtitle">
-            Monitorea el estado actual de todos los servidores y servicios.
+          <p className="services-subtitle text-muted mb-0">
+            Monitorea el estado y salud operativa de todos los servidores registrados en tiempo real.
           </p>
         </div>
+
+        <CButton color="primary" variant="outline" onClick={handleRefresh} disabled={loading}>
+          <CIcon icon={cilLoopCircular} className={`me-2 ${loading ? 'rotate' : ''}`} />
+          {loading ? 'Actualizando...' : 'Actualizar'}
+        </CButton>
       </div>
 
       <CRow className="g-4 mb-4">
         {stats.map((stat) => (
-          <CCol
-            md={6}
-            xl={3}
-            key={stat.id}
-          >
+          <CCol md={6} xl={3} key={stat.id}>
             <CCard className="stats-card">
               <CCardBody>
                 <div className="stats-content">
-                  <div
-                    className={`stats-icon ${stat.color}`}
-                  />
-
+                  <div className={`stats-icon ${stat.color}`} />
                   <div>
-                    <p className="stats-title">
-                      {stat.title}
-                    </p>
-
-                    <h3 className="stats-value">
-                      {stat.value}
-                    </h3>
-
-                    <span className="stats-percentage">
-                      {stat.percentage}
-                    </span>
+                    <p className="stats-title">{stat.title}</p>
+                    <h3 className="stats-value">{stat.value}</h3>
+                    <span className="stats-percentage">{stat.percentage}</span>
                   </div>
                 </div>
               </CCardBody>
@@ -220,25 +190,13 @@ const ServiceStatus = () => {
               <CFormSelect
                 className="custom-select"
                 value={statusFilter}
-                onChange={(e) =>
-                  setStatusFilter(e.target.value)
-                }
+                onChange={(e) => setStatusFilter(e.target.value)}
               >
-                <option value="Todos">
-                  Estado: Todos
-                </option>
-
-                <option value="Activo">
-                  Activo
-                </option>
-
-                <option value="En mantenimiento">
-                  En mantenimiento
-                </option>
-
-                <option value="Caído">
-                  Caído
-                </option>
+                <option value="Todos">Estado: Todos</option>
+                <option value="Activo">Activo</option>
+                <option value="En mantenimiento">En mantenimiento</option>
+                <option value="Caído">Caído</option>
+                <option value="Inactivo">Inactivo</option>
               </CFormSelect>
             </CCol>
 
@@ -246,184 +204,82 @@ const ServiceStatus = () => {
               <CFormSelect
                 className="custom-select"
                 value={serviceType}
-                onChange={(e) =>
-                  setServiceType(e.target.value)
-                }
+                onChange={(e) => setServiceType(e.target.value)}
               >
-                <option value="Todos">
-                  Tipo de servicio: Todos
-                </option>
-
-                <option value="Aplicación">
-                  Aplicación
-                </option>
-
-                <option value="Base de datos">
-                  Base de datos
-                </option>
-
-                <option value="Web">
-                  Web
-                </option>
-
-                <option value="Almacenamiento">
-                  Almacenamiento
-                </option>
+                <option value="Todos">Tipo: Todos</option>
+                <option value="Aplicaciones">Aplicaciones</option>
+                <option value="Base de datos">Base de datos</option>
+                <option value="Web">Web</option>
+                <option value="Archivos">Archivos</option>
               </CFormSelect>
             </CCol>
 
-            <CCol md={4}>
+            <CCol md={6}>
               <CInputGroup>
-                <span className="input-group-text search-icon">
-                  <CIcon icon={cilSearch} />
-                </span>
-
                 <CFormInput
-                  placeholder="Buscar servidor..."
-                  className="custom-input"
+                  placeholder="Buscar por servidor o dirección IP..."
                   value={search}
-                  onChange={(e) =>
-                    setSearch(e.target.value)
-                  }
+                  onChange={(e) => setSearch(e.target.value)}
                 />
               </CInputGroup>
             </CCol>
-
-            <CCol md={2}>
-              <CButton
-                className="refresh-btn"
-                onClick={handleRefresh}
-              >
-                <CIcon
-                  icon={cilLoopCircular}
-                  className="me-2"
-                />
-
-                Actualizar
-              </CButton>
-            </CCol>
           </CRow>
 
-          <CTable
-            hover
-            responsive
-            align="middle"
-            className="services-table"
-          >
+          <CTable responsive align="middle" hover>
             <CTableHead>
               <CTableRow>
-                <CTableHeaderCell>
-                  Nombre del servidor
-                </CTableHeaderCell>
-
-                <CTableHeaderCell>
-                  IP
-                </CTableHeaderCell>
-
-                <CTableHeaderCell>
-                  Tipo de servicio
-                </CTableHeaderCell>
-
-                <CTableHeaderCell>
-                  Ubicación
-                </CTableHeaderCell>
-
-                <CTableHeaderCell>
-                  Estado
-                </CTableHeaderCell>
-
-                <CTableHeaderCell>
-                  Último cambio
-                </CTableHeaderCell>
-
-                <CTableHeaderCell className="text-center">
-                  Acciones
-                </CTableHeaderCell>
+                <CTableHeaderCell>Servidor</CTableHeaderCell>
+                <CTableHeaderCell>IP</CTableHeaderCell>
+                <CTableHeaderCell>Tipo</CTableHeaderCell>
+                <CTableHeaderCell>Ubicación</CTableHeaderCell>
+                <CTableHeaderCell>Estado</CTableHeaderCell>
+                <CTableHeaderCell>Última Actualización</CTableHeaderCell>
               </CTableRow>
             </CTableHead>
 
             <CTableBody>
-              {filteredServices.map((service) => (
+              {loading && (
+                <CTableRow>
+                  <CTableDataCell colSpan={6} className="text-center py-4">
+                    Cargando servidores en tiempo real...
+                  </CTableDataCell>
+                </CTableRow>
+              )}
+
+              {!loading && filteredServices.length === 0 && (
+                <CTableRow>
+                  <CTableDataCell colSpan={6} className="text-center py-4 text-muted">
+                    No se encontraron servidores que coincidan con los filtros.
+                  </CTableDataCell>
+                </CTableRow>
+              )}
+
+              {!loading && filteredServices.map((service) => (
                 <CTableRow key={service.id}>
-                  <CTableDataCell className="server-name">
-                    {service.servidor}
-                  </CTableDataCell>
-
                   <CTableDataCell>
-                    {service.ip}
+                    <span className="service-name font-semibold">{service.servidor}</span>
                   </CTableDataCell>
-
                   <CTableDataCell>
-                    {service.tipo}
+                    <code className="text-primary">{service.ip}</code>
                   </CTableDataCell>
-
+                  <CTableDataCell>{service.tipo}</CTableDataCell>
+                  <CTableDataCell>{service.ubicacion}</CTableDataCell>
                   <CTableDataCell>
-                    {service.ubicacion}
-                  </CTableDataCell>
-
-                  <CTableDataCell>
-                    <div
-                      className={`status-badge ${getStatusClass(
-                        service.estado,
-                      )}`}
-                    >
+                    <div className={`status-badge ${getStatusClass(service.estado)}`}>
                       <span className="status-dot" />
-
                       {service.estado}
                     </div>
                   </CTableDataCell>
-
-                  <CTableDataCell>
-                    {service.ultimoCambio}
-                  </CTableDataCell>
-
-                  <CTableDataCell>
-                    <div className="actions-container">
-                      <button className="table-action-btn">
-                        <CIcon
-                          icon={cilCloudDownload}
-                        />
-                      </button>
-
-                      <button className="table-action-btn">
-                        <CIcon
-                          icon={cilSearch}
-                        />
-                      </button>
-                    </div>
-                  </CTableDataCell>
+                  <CTableDataCell className="text-muted text-sm">{service.ultimoCambio}</CTableDataCell>
                 </CTableRow>
               ))}
             </CTableBody>
           </CTable>
 
-          <div className="table-footer">
-            <span>
-              Mostrando 1 a {filteredServices.length} de{' '}
-              {servicesData.length} servicios
+          <div className="table-footer mt-3 d-flex justify-content-between align-items-center">
+            <span className="text-muted text-sm">
+              Mostrando {filteredServices.length} de {servicesData.length} servidores
             </span>
-
-            <div className="pagination-container">
-              <button className="pagination-btn">
-                {'<'}
-              </button>
-
-              <button className="pagination-btn active-page">
-                1
-              </button>
-
-              <button className="pagination-btn">
-                2
-              </button>
-
-              <button className="pagination-btn">
-                3
-              </button>
-
-              <button className="pagination-btn">
-                {'>'}
-              </button>
-            </div>
           </div>
         </CCardBody>
       </CCard>

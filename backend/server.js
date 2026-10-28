@@ -1,4 +1,5 @@
-require('dotenv').config()
+const path = require('path')
+require('dotenv').config({ path: path.join(__dirname, '.env'), override: true })
 
 const express = require('express')
 const cors = require('cors')
@@ -6,13 +7,14 @@ const cors = require('cors')
 const authRoutes = require('./routes/auth.routes')
 const servidoresRoutes = require('./routes/servidores.routes')
 const usuariosRoutes = require('./routes/usuarios.routes')
-const rolesRoutes = require('./routes/roles.routes');
-const solicitudesRoutes = require('./routes/solicitudes.routes');
-const alertasRoutes = require('./routes/alertas.routes');
+const rolesRoutes = require('./routes/roles.routes')
+const solicitudesRoutes = require('./routes/solicitudes.routes')
+const alertasRoutes = require('./routes/alertas.routes')
 const dashboardRoutes = require('./routes/dashboard.routes')
 const profileRoutes = require('./routes/profileRoutes')
-
-
+const historialRoutes = require('./routes/historial.routes')
+const logsRoutes = require('./routes/logs.routes')
+const parametrosRoutes = require('./routes/parametros.routes')
 
 const app = express()
 
@@ -22,12 +24,14 @@ app.use(express.json())
 app.use('/api/auth', authRoutes)
 app.use('/api/servidores', servidoresRoutes)
 app.use('/api/usuarios', usuariosRoutes)
-app.use('/api/roles', rolesRoutes);
-app.use('/api/solicitudes', solicitudesRoutes);
-app.use('/api/alertas', alertasRoutes);
-app.use( '/api/dashboard', dashboardRoutes )
+app.use('/api/roles', rolesRoutes)
+app.use('/api/solicitudes', solicitudesRoutes)
+app.use('/api/alertas', alertasRoutes)
+app.use('/api/dashboard', dashboardRoutes)
+app.use('/api/historial', historialRoutes)
+app.use('/api/logs', logsRoutes)
+app.use('/api/parametros', parametrosRoutes)
 app.use('/api', profileRoutes)
-
 
 // Puerto del servidor Express
 const PORT = process.env.PORT || 3001

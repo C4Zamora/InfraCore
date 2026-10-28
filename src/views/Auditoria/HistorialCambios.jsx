@@ -8,25 +8,11 @@ import { useState, useEffect, useCallback } from 'react';
 import '../../Styles/historialCambios.css';
 
 // ─── Constantes ────────────────────────────────────────────────────────────────
-const BASE_URL = '/api/v1'; // Cambia por tu URL base real
+const BASE_URL = 'http://localhost:3001/api';
 
-const MODULOS = ['Todos', 'Servidores', 'Usuarios', 'Roles y permisos', 'Backups', 'Solicitudes', 'Alertas'];
-const USUARIOS = ['Todos', 'admin', 'maria.gómez', 'soporte01', 'ana.lopez', 'sistema'];
+const MODULOS = ['Todos', 'Servidores', 'Usuarios', 'Roles y permisos', 'Backups', 'Solicitudes', 'Alertas', 'Configuración'];
+const USUARIOS = ['Todos', 'admin@infracore.com', 'tecnico@infracore.com', 'sistema'];
 const PER_PAGE_OPTIONS = [10, 25, 50, 100];
-
-// ─── Datos de ejemplo (eliminar cuando conectes el backend) ────────────────────
-const MOCK_DATA = {
-  total: 56,
-  registros: [
-    { id: 1, fecha: '10/05/2024 09:45:22', usuario: 'admin',       modulo: 'Servidores',       accion: 'Actualización', descripcion: 'Se actualizó el estado del servidor SRV-WEB-03 a Caído',    ip: '192.168.1.100' },
-    { id: 2, fecha: '10/05/2024 09:30:15', usuario: 'maria.gomez', modulo: 'Usuarios',         accion: 'Creación',      descripcion: 'Se creó el usuario juan.perez con rol Técnico',             ip: '192.168.1.105' },
-    { id: 3, fecha: '10/05/2024 09:15:48', usuario: 'soporte01',   modulo: 'Servidores',       accion: 'Actualización', descripcion: 'Se cambió el servidor SRV-DB-02 a mantenimiento',            ip: '192.168.1.101' },
-    { id: 4, fecha: '10/05/2024 08:50:11', usuario: 'admin',       modulo: 'Roles y permisos', accion: 'Actualización', descripcion: 'Se modificaron los permisos del rol Soporte',                ip: '192.168.1.100' },
-    { id: 5, fecha: '10/05/2024 08:30:05', usuario: 'sistema',     modulo: 'Backups',          accion: 'Ejecución',     descripcion: 'Backup diario ejecutado correctamente en SRV-DB-02',        ip: '192.168.1.10'  },
-    { id: 6, fecha: '10/05/2024 08:15:33', usuario: 'ana.lopez',   modulo: 'Solicitudes',      accion: 'Aprobación',    descripcion: 'Se aprobó la solicitud SOL-2024-026 de Luis García',        ip: '192.168.1.102' },
-    { id: 7, fecha: '10/05/2024 07:45:19', usuario: 'sistema',     modulo: 'Alertas',          accion: 'Generación',    descripcion: 'Alerta crítica generada: SRV-WEB-03 caído',                 ip: '192.168.1.10'  },
-  ],
-};
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 function getBadgeClass(accion) {
@@ -59,17 +45,11 @@ function useHistorial(filters, pagination, sort) {
     setLoading(true);
     setError(null);
     try {
-      // ── Integración real con backend ──────────────────────────────────────
-      // const qs = buildQueryParams(filters, pagination, sort);
-      // const res = await fetch(`${BASE_URL}/historial?${qs}`);
-      // if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      // const json = await res.json();
-      // setData(json); // Espera { total: number, registros: [] }
-      // ─────────────────────────────────────────────────────────────────────
-
-      // Simulación con mock (eliminar cuando conectes backend)
-      await new Promise((r) => setTimeout(r, 400));
-      setData(MOCK_DATA);
+      const qs = buildQueryParams(filters, pagination, sort);
+      const res = await fetch(`${BASE_URL}/historial?${qs}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      setData(json);
     } catch (err) {
       setError(err.message || 'Error al cargar el historial');
     } finally {
@@ -88,8 +68,8 @@ function useHistorial(filters, pagination, sort) {
 export default function HistorialCambios() {
   // Filtros
   const [filters, setFilters] = useState({
-    fechaDesde: '2024-05-01',
-    fechaHasta: '2024-05-10',
+    fechaDesde: '',
+    fechaHasta: '',
     modulo: 'Todos',
     usuario: 'Todos',
     busqueda: '',

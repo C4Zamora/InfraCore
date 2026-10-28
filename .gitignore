@@ -15,10 +15,14 @@ yarn.lock
 .eslintcache
 .DS_Store
 .idea
+/routes/.env
+.env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+
+.presentacion_infracore.html
 
 npm-debug.log*
 yarn-debug.log*

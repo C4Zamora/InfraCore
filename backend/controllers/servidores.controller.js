@@ -1,4 +1,5 @@
 const db = require('../db')
+const { registrarCambio } = require('./historial.controller')
 
 const obtenerServidores = (req, res) => {
   const sql = `
@@ -36,8 +37,7 @@ const obtenerServidores = (req, res) => {
 }
 
 const actualizarServidor = (req, res) => {
-  // CAMBIO 1: Extraer 'id_servidor' en lugar de 'id' para coincidir con la ruta de Express
-  const { id_servidor } = req.params
+  const id_servidor = req.params.id_servidor || req.params.id
 
   const {
     nombre,
@@ -118,6 +118,8 @@ const actualizarServidor = (req, res) => {
         return res.status(404).json({ message: 'Servidor no encontrado' })
       }
 
+      registrarCambio('tecnico', 'Servidores', 'Actualización', `Se actualizó el servidor "${nombre || id_servidor}"`)
+
       res.json({
         message: 'Servidor actualizado correctamente',
       })
@@ -126,8 +128,7 @@ const actualizarServidor = (req, res) => {
 }
 
 const eliminarServidor = (req, res) => {
-  // CAMBIO 3: Cambiado 'id' por 'id_servidor'
-  const { id_servidor } = req.params
+  const id_servidor = req.params.id_servidor || req.params.id
 
   const sql = `
     UPDATE servidores
@@ -146,6 +147,8 @@ const eliminarServidor = (req, res) => {
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: 'Servidor no encontrado' })
     }
+
+    registrarCambio('tecnico', 'Servidores', 'Eliminación', `Se desactivó el servidor ID: ${id_servidor}`)
 
     res.json({
       message: 'Servidor desactivado correctamente',
@@ -197,6 +200,8 @@ const registrarServidor = (req, res) => {
           message: 'Error registrando servidor',
         })
       }
+
+      registrarCambio('tecnico', 'Servidores', 'Registro', `Se registró el nuevo servidor: ${serverName} (${ip})`)
 
       res.status(201).json({
         message: 'Servidor registrado correctamente',
